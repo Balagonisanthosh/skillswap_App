@@ -4,6 +4,8 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -20,7 +22,7 @@ export default function LoginScreen() {
     try {
       const data = await loginUser(email, password);
       console.log(data);
-      
+
       await login(data.user, data.accessToken);
       router.replace("/home");
     } catch (error: any) {
@@ -29,36 +31,46 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    >
+      <View style={styles.container}>
+        <Text style={styles.title}>Welcome Back</Text>
 
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Email"
+          placeholderTextColor="#6b7280"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          style={styles.input}
+        />
 
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        style={styles.input}
-      />
+        <TextInput
+          placeholder="Password"
+          placeholderTextColor="#6b7280"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          style={styles.input}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.registerLink}
-        onPress={() => router.push("/(auth)/register")}
-      >
-        <Text style={styles.registerText}>Don't have an account? Register</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          style={styles.registerLink}
+          onPress={() => router.push("/(auth)/register")}
+        >
+          <Text style={styles.registerText}>
+            Don't have an account? Register
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -83,6 +95,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 15,
     backgroundColor: "#ffffff",
+    color: "#111827",
   },
   button: {
     backgroundColor: "#2563eb",
