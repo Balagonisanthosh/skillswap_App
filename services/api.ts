@@ -1,8 +1,12 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
+const BASE_URL = __DEV__
+  ? "http://192.168.1.5:3000/api"
+  : "https://skill-swap-fullstack-1-8y82.onrender.com/api";
+
 export const api = axios.create({
-  baseURL: "http://10.159.208.168:3000/api", 
+  baseURL: BASE_URL,
 });
 
 api.interceptors.request.use(
