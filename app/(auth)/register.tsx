@@ -8,6 +8,11 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Image,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { registerUser } from "@/services/authService";
@@ -18,11 +23,15 @@ export default function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [knownSkillInput, setKnownSkillInput] = useState("");
   const [learnSkillInput, setLearnSkillInput] = useState("");
+
   const [knownSkills, setKnownSkills] = useState<string[]>([]);
   const [learnSkills, setLearnSkills] = useState<string[]>([]);
+
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const addKnownSkill = () => {
     if (knownSkillInput.trim() === "") return;
@@ -37,10 +46,10 @@ export default function Register() {
   };
 
   const pickImage = async () => {
-    const permission =
+    const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permission.granted) {
+    if (!permissionResult.granted) {
       alert("Permission to access gallery is required!");
       return;
     }
@@ -59,6 +68,8 @@ export default function Register() {
 
   const handleRegister = async () => {
     try {
+      setLoading(true);
+
       const formData = new FormData();
 
       formData.append("username", username);
@@ -79,134 +90,148 @@ export default function Register() {
 
       await registerUser(formData);
 
-      alert("Register success!");
+      alert("Register success 🎉");
+
       router.push("/(auth)/login");
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.message ||
         "Something went wrong";
+
       alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View style={styles.container}>
-        <Text style={styles.title}>Create Account</Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.title}>Create Account</Text>
 
-        <TextInput
-          placeholder="Username"
-          placeholderTextColor="#6b7280"
-          value={username}
-          onChangeText={setUsername}
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
+            style={styles.input}
+          />
 
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor="#6b7280"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            style={styles.input}
+          />
 
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#6b7280"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={styles.input}
+          />
 
-        <View style={styles.uploadRow}>
-          <Text style={styles.uploadLabel}>Upload Profile Image</Text>
+          <View style={styles.uploadRow}>
+            <Text style={styles.uploadLabel}>Upload Profile Image</Text>
 
-          <TouchableOpacity style={styles.fileButton} onPress={pickImage}>
-            <Text style={styles.fileButtonText}>
-              {profileImage ? "Change File" : "Choose File"}
+            <TouchableOpacity style={styles.fileButton} onPress={pickImage}>
+              <Text style={styles.fileButtonText}>
+                {profileImage ? "Change File" : "Choose File"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {profileImage && (
+            <Image source={{ uri: profileImage }} style={styles.previewImage} />
+          )}
+
+          <TextInput
+            placeholder="Type skills you know and press enter"
+            value={knownSkillInput}
+            onChangeText={setKnownSkillInput}
+            returnKeyType="done"
+            onSubmitEditing={addKnownSkill}
+            style={styles.input}
+          />
+
+          <View style={styles.skillContainer}>
+            {knownSkills.map((skill, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.skillTag}
+                onPress={() =>
+                  setKnownSkills(knownSkills.filter((_, i) => i !== index))
+                }
+              >
+                <Text style={styles.skillText}>{skill} ✕</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TextInput
+            placeholder="Type skills you want to learn and press enter"
+            value={learnSkillInput}
+            onChangeText={setLearnSkillInput}
+            onSubmitEditing={addLearnSkill}
+            returnKeyType="done"
+            style={styles.input}
+          />
+
+          <View style={styles.skillContainer}>
+            {learnSkills.map((skill, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.skillTag, { backgroundColor: "#16a34a" }]}
+                onPress={() =>
+                  setLearnSkills(learnSkills.filter((_, i) => i !== index))
+                }
+              >
+                <Text style={styles.skillText}>{skill} ✕</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.7 }]}
+            onPress={handleRegister}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Register</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.loginLink}
+            onPress={() => router.push("/(auth)/login")}
+          >
+            <Text style={styles.loginText}>
+              Already have an account? Login
             </Text>
           </TouchableOpacity>
-        </View>
-
-        {profileImage && <Text style={styles.fileName}>Selected ✓</Text>}
-
-        <TextInput
-          placeholder="Type skills you know and press enter"
-          placeholderTextColor="#6b7280"
-          value={knownSkillInput}
-          onChangeText={setKnownSkillInput}
-          returnKeyType="done"
-          onSubmitEditing={addKnownSkill}
-          style={styles.input}
-        />
-
-        <View style={styles.skillContainer}>
-          {knownSkills.map((skill, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.skillTag}
-              onPress={() =>
-                setKnownSkills(knownSkills.filter((_, i) => i !== index))
-              }
-            >
-              <Text style={styles.skillText}>{skill} ✕</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <TextInput
-          placeholder="Type skills you want to learn and press enter"
-          placeholderTextColor="#6b7280"
-          value={learnSkillInput}
-          onChangeText={setLearnSkillInput}
-          onSubmitEditing={addLearnSkill}
-          returnKeyType="done"
-          style={styles.input}
-        />
-
-        <View style={styles.skillContainer}>
-          {learnSkills.map((skill, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[styles.skillTag, { backgroundColor: "#16a34a" }]}
-              onPress={() =>
-                setLearnSkills(learnSkills.filter((_, i) => i !== index))
-              }
-            >
-              <Text style={styles.skillText}>{skill} ✕</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <TouchableOpacity style={styles.button} onPress={handleRegister}>
-          <Text style={styles.buttonText}>Register</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.loginLink}
-          onPress={() => router.push("/(auth)/login")}
-        >
-          <Text style={styles.loginText}>
-            Already have an account? Login
-          </Text>
-        </TouchableOpacity>
-      </View>
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
+    paddingVertical: 40,
     backgroundColor: "#f9fafb",
   },
 
@@ -225,7 +250,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 15,
     backgroundColor: "#ffffff",
-    color: "#111827",
   },
 
   button: {
@@ -300,9 +324,11 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  fileName: {
-    fontSize: 13,
-    color: "#16a34a",
-    marginBottom: 10,
+  previewImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignSelf: "center",
+    marginBottom: 15,
   },
 });

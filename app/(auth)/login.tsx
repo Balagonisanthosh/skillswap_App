@@ -6,6 +6,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -16,49 +17,72 @@ export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const { login } = useAuthStore();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      alert("Please enter email and password");
+      return;
+    }
+
     try {
+      setLoading(true);
+
       const data = await loginUser(email, password);
       console.log(data);
 
       await login(data.user, data.accessToken);
+
       router.replace("/home");
     } catch (error: any) {
-      alert(error.message);
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
+
+      alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.container}>
         <Text style={styles.title}>Welcome Back</Text>
 
         <TextInput
           placeholder="Email"
-          placeholderTextColor="#6b7280"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
-          autoCapitalize="none"
           style={styles.input}
+          autoCapitalize="none"
         />
 
         <TextInput
           placeholder="Password"
-          placeholderTextColor="#6b7280"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
           style={styles.input}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
+        <TouchableOpacity
+          style={[styles.button, loading && { opacity: 0.7 }]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -95,7 +119,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 15,
     backgroundColor: "#ffffff",
-    color: "#111827",
   },
   button: {
     backgroundColor: "#2563eb",
